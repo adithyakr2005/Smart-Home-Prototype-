@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Home Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      display: inline-block;
+      margin: 20px;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-size: 20px;
+    }
+    .slider-container {
+      margin-top: 30px;
+    }
+    input[type="range"] {
+      width: 300px;
+    }
+    .status {
+      font-size: 14px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏠 Smart Home Dashboard</h1>
+
+  <div class="card">
+    🌡️ Temperature: <span id="temp">--</span> °C
+  </div>
+
+  <div class="card">
+    💧 Humidity: <span id="humidity">--</span> %
+  </div>
+
+  <div class="card">
+    🌫️ CO₂ (MQ135): <span id="co2">--</span> ppm
+  </div>
+
+  <div class="slider-container">
+    <h2>🌀 Fan Speed</h2>
+    <input type="range" id="fanSlider" min="0" max="100" value="0" />
+    <p>Speed: <span id="fanValue">0</span>%</p>
+  </div>
+
+  <div class="slider-container">
+    <h2>💡 LED Brightness</h2>
+    <input type="range" id="ledSlider" min="0" max="100" value="0" />
+    <p>Brightness: <span id="ledValue">0</span>%</p>
+  </div>
+
+  <p class="status" id="status">Connecting...</p>
+
+  <script>
+    const socket = new WebSocket("ws://esp.local:81");
+
+    const tempEl = document.getElementById("temp");
+    const humidityEl = document.getElementById("humidity");
+    const co2El = document.getElementById("co2");
+    const fanSlider = document.getElementById("fanSlider");
+    const fanValue = document.getElementById("fanValue");
+    const ledSlider = document.getElementById("ledSlider");
+    const ledValue = document.getElementById("ledValue");
+    const statusEl = document.getElementById("status");
+
+    socket.onopen = () => {
+      statusEl.textContent = "✅ Connected to ESP WebSocket";
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        tempEl.textContent = data.temp;
+        humidityEl.textContent = data.humidity;
+        co2El.textContent = data.co2_ppm;
+      } catch (e) {
+        console.error("Invalid data:", event.data);
+      }
+    };
+
+    socket.onerror = () => {
+      statusEl.textContent = "❌ WebSocket Error";
+      statusEl.style.color = "red";
+    };
+
+    fanSlider.addEventListener("input", () => {
+      const value = fanSlider.value;
+      fanValue.textContent = value;
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send("fan:" + value);
+      }
+    });
+
+    ledSlider.addEventListener("input", () => {
+      const value = ledSlider.value;
+      ledValue.textContent = value;
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send("led:" + value);
+      }
+    });
+  </script>
+
+</body>
+</html>
