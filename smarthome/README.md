@@ -49,6 +49,3 @@ Built with plain HTML, CSS & JavaScript:
 
 Edit your Wi-Fi credentials in the code:
 
-```cpp
-const char* ssid = "Om gal";
-const char* password = "om123456789";
